@@ -1,0 +1,108 @@
+:root {
+  --bg: #FBE3D2;
+  --card: #FFFFFF;
+  --ink: #2E3A4B;
+  --muted: #5B6577;
+  --accent: #1F7A6F;
+  --accent-ink: #FFFFFF;
+  --chip: #FFF6E0;
+  --line: #EBD9CB;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1E2530;
+    --card: #2A3340;
+    --ink: #F3EEE8;
+    --muted: #B5BDC9;
+    --accent: #4FB3A5;
+    --accent-ink: #10201E;
+    --chip: #3A3528;
+    --line: #3A4452;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 17px/1.6 "Avenir Next", Avenir, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+
+main {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 40px 16px 64px;
+}
+
+header.brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+header.brand img {
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.08);
+}
+header.brand .name { font-size: 26px; font-weight: 800; line-height: 1.2; }
+header.brand .tag { color: var(--muted); font-size: 15px; }
+
+.card {
+  background: var(--card);
+  border-radius: 22px;
+  padding: 28px 24px;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.06);
+}
+
+h1 { font-size: 30px; line-height: 1.2; margin: 0 0 6px; }
+h2 { font-size: 20px; margin: 28px 0 8px; }
+p, li { margin: 0 0 10px; }
+ul { padding-left: 22px; margin: 0 0 10px; }
+.updated { color: var(--muted); font-size: 14px; margin-bottom: 20px; }
+
+a { color: var(--accent); font-weight: 600; }
+
+.chip {
+  display: inline-block;
+  background: var(--chip);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.button {
+  display: inline-block;
+  background: var(--accent);
+  color: var(--accent-ink);
+  text-decoration: none;
+  border-radius: 16px;
+  padding: 12px 22px;
+  margin: 6px 8px 6px 0;
+}
+
+details {
+  border-top: 1px solid var(--line);
+  padding: 12px 0;
+}
+details:last-of-type { border-bottom: 1px solid var(--line); }
+summary { cursor: pointer; font-weight: 700; }
+details p { margin-top: 8px; }
+
+nav.links {
+  margin-top: 28px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  font-size: 15px;
+}
+footer {
+  margin-top: 16px;
+  color: var(--muted);
+  font-size: 14px;
+}
