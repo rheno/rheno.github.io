@@ -1,7 +1,102 @@
-<html>
-<title></title>
-<head></head>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rheno Manggala Budiasa</title>
+<meta name="description" content="DevOps engineering manager in Singapore. CI/CD, AWS, Terraform, observability.">
+<style>
+  :root {
+    --bg: #0d1117; --fg: #c9d1d9; --dim: #8b949e; --accent: #3fb950; --link: #58a6ff; --rule: #21262d;
+  }
+  @media (prefers-color-scheme: light) {
+    :root { --bg: #fafafa; --fg: #24292f; --dim: #57606a; --accent: #1a7f37; --link: #0969da; --rule: #d0d7de; }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg);
+    font: 15px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  main { max-width: 760px; margin: 0 auto; padding: 48px 16px 80px; }
+  a { color: var(--link); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .prompt { color: var(--accent); }
+  .prompt::before { content: "rheno@sg:~$ "; color: var(--dim); }
+  h1 { font-size: 1.6rem; margin: .2em 0 0; }
+  h2 { font-size: 1rem; margin: 2.4em 0 .6em; }
+  p, ul { margin: .4em 0; }
+  .dim { color: var(--dim); }
+  ul { list-style: none; padding: 0; }
+  li { padding-left: 2ch; text-indent: -2ch; }
+  li::before { content: "- "; color: var(--dim); }
+  .job { margin: 1em 0; }
+  .job b { color: var(--fg); }
+  .tags span { display: inline-block; border: 1px solid var(--rule); padding: 0 .6ch; margin: 0 .4ch .4ch 0; border-radius: 4px; color: var(--dim); }
+  .cursor { display: inline-block; width: 1ch; background: var(--accent); animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
+  footer { margin-top: 3em; border-top: 1px dashed var(--rule); padding-top: 1em; }
+</style>
+</head>
 <body>
-<h1>Hello rheno !!!</h1>
+<main>
+  <p class="prompt">whoami</p>
+  <h1>Rheno Manggala Budiasa</h1>
+  <p class="dim">DevOps Engineering Manager · Singapore · 13 years shipping software</p>
+
+  <p class="prompt">cat about.txt</p>
+  <p>I joined Kiteworks as its first DevOps engineer and built the function from one person to a team supporting all of engineering, QA and security. Before that I led engineering at a fintech and built Android apps at Samsung R&amp;D.</p>
+
+  <p class="prompt">ls ~/stack</p>
+  <p class="tags">
+    <span>AWS</span><span>EKS</span><span>Terraform</span><span>Ansible</span><span>GitLab CI</span><span>Jenkins</span><span>Docker</span><span>Prometheus</span><span>Grafana</span><span>Python</span><span>Bash</span><span>Go</span><span>C++</span>
+  </p>
+
+  <p class="prompt">history | grep job</p>
+  <div class="job">
+    <b>Manager, DevOps Engineering</b> @ Kiteworks <span class="dim">2018–now</span>
+    <ul>
+      <li>Built CI/CD from scratch across GitLab CI, Jenkins, Ansible and Terraform.</li>
+      <li>Run customer and build infrastructure on AWS: Elastic Beanstalk, EKS, RDS, EC2, Lambda.</li>
+      <li>Own observability with Prometheus, Grafana and Apache DevLake.</li>
+    </ul>
+  </div>
+  <div class="job">
+    <b>Engineering Advisor</b> @ Indonesian startups <span class="dim">2017–2018</span>
+    <ul><li>Improved development practice at usetada.com, pawoon.com and psikologimu.co.</li></ul>
+  </div>
+  <div class="job">
+    <b>VP of Engineering</b> @ UangTeman <span class="dim">2015–2017</span>
+    <ul>
+      <li>Scaled the team from 5 to 15 in a year; led the PHP → Go backend migration.</li>
+      <li>Shipped Indonesia's first micro-lending mobile app.</li>
+    </ul>
+  </div>
+  <div class="job">
+    <b>Lead Engineer</b> @ Samsung R&amp;D <span class="dim">2012–2015</span>
+    <ul><li>Lead Android engineer on ChatOn, Galaxy Gift and Samsung Salaam.</li></ul>
+  </div>
+
+  <p class="prompt">ls -l ~/portfolio</p>
+  <ul class="portfolio">
+    <li><a href="https://github.com/moby/hyperkit/pull/324">hyperkit-patch</a> <span class="dim">accepted patch to the hypervisor toolkit behind Docker for Mac</span></li>
+    <li><a href="https://sg.news.yahoo.com/friend-uangteman-launches-mobile-app-reveals-expansion-plan-120606967.html">uangteman-app</a> <span class="dim">Indonesia's first micro-lending mobile app (press)</span></li>
+    <li><a href="https://www.samsung.com/africa_en/support/mobile-devices/what-is-the-chaton-application/">samsung-chaton</a> <span class="dim">Samsung's messenger app; lead Android engineer</span></li>
+    <li><a href="https://www.samsung.com/id/offer/galaxy-gift/">samsung-galaxy-gift</a> <span class="dim">offers and rewards app for Galaxy owners</span></li>
+    <li><a href="https://r1.community.samsung.com/t5/apps-services/about-salaam/td-p/36806142">samsung-salaam</a> <span class="dim">lifestyle app for Muslim users</span></li>
+    <li><a href="https://github.com/rheno">github.com/rheno</a> <span class="dim">everything else</span></li>
+  </ul>
+
+  <p class="prompt">cat achievements.txt</p>
+  <ul>
+    <li>Facebook Hacker Cup 2020 <span class="dim">qualified for the main round</span></li>
+    <li>B.Eng. Informatics, Institut Teknologi Bandung <span class="dim">2011</span></li>
+  </ul>
+
+  <footer>
+    <p class="prompt">contact <span class="cursor">&nbsp;</span></p>
+    <p><a href="mailto:rhenobudiasa@outlook.com">email</a> · <a href="https://github.com/rheno">github</a> · <a href="https://www.linkedin.com/in/rheno-manggala-budiasa-62101037">linkedin</a></p>
+  </footer>
+</main>
 </body>
 </html>
