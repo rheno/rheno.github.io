@@ -5,98 +5,226 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Rheno Budiasa</title>
 <meta name="description" content="DevOps engineering manager in Singapore. CI/CD, AWS, Terraform, observability.">
+<meta property="og:title" content="Rheno Budiasa">
+<meta property="og:description" content="DevOps Engineering Manager in Singapore. I build engineering platforms from zero.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://rheno.github.io/findinghome/icon.png">
+<link rel="icon" href="/findinghome/icon.png">
 <style>
   :root {
-    --bg: #0d1117; --fg: #c9d1d9; --dim: #8b949e; --accent: #3fb950; --link: #58a6ff; --rule: #21262d;
+    --bg: #fafaf9; --surface: #ffffff; --fg: #18181b; --dim: #62626b; --rule: #e6e6e9;
+    --accent: #6d5efc; --accent2: #14b8a6; --glow: rgba(109,94,252,.14);
+    --radius: 18px; --shadow: 0 1px 2px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.05);
   }
-  @media (prefers-color-scheme: light) {
-    :root { --bg: #fafafa; --fg: #24292f; --dim: #57606a; --accent: #1a7f37; --link: #0969da; --rule: #d0d7de; }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #09090b; --surface: #131316; --fg: #f4f4f5; --dim: #a1a1aa; --rule: #26262b;
+      --accent: #8b7dff; --accent2: #2dd4bf; --glow: rgba(139,125,255,.18);
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
+    }
   }
   * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
   body {
     margin: 0; background: var(--bg); color: var(--fg);
-    font: 15px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
   }
-  main { max-width: 760px; margin: 0 auto; padding: 48px 16px 80px; }
-  a { color: var(--link); text-decoration: none; }
-  a:hover { text-decoration: underline; }
-  .prompt { color: var(--accent); }
-  .prompt::before { content: "rheno@sg:~$ "; color: var(--dim); }
-  h1 { font-size: 1.6rem; margin: .2em 0 0; }
-  h2 { font-size: 1rem; margin: 2.4em 0 .6em; }
-  p, ul { margin: .4em 0; }
-  .dim { color: var(--dim); }
-  ul { list-style: none; padding: 0; }
-  li { padding-left: 2ch; text-indent: -2ch; }
-  li::before { content: "- "; color: var(--dim); }
-  .job { margin: 1em 0; }
-  .job b { color: var(--fg); }
-  .tags span { display: inline-block; border: 1px solid var(--rule); padding: 0 .6ch; margin: 0 .4ch .4ch 0; border-radius: 4px; color: var(--dim); }
-  .cursor { display: inline-block; width: 1ch; background: var(--accent); animation: blink 1s steps(1) infinite; }
-  @keyframes blink { 50% { opacity: 0; } }
-  @media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
-  footer { margin-top: 3em; border-top: 1px dashed var(--rule); padding-top: 1em; }
+  body::before {
+    content: ""; position: fixed; inset: 0 0 auto 0; height: 520px; z-index: -1;
+    background:
+      radial-gradient(600px 300px at 20% 0%, var(--glow), transparent 70%),
+      radial-gradient(500px 280px at 85% 10%, rgba(20,184,166,.12), transparent 70%);
+  }
+  main { max-width: 880px; margin: 0 auto; padding: 0 20px 80px; }
+  a { color: inherit; text-decoration: none; }
+
+  nav { display: flex; justify-content: space-between; align-items: center; padding: 24px 0; }
+  .logo { font-weight: 700; letter-spacing: -.02em; }
+  nav .links { display: flex; gap: 22px; font-size: .92rem; color: var(--dim); }
+  nav .links a:hover { color: var(--fg); }
+
+  .hero { padding: 72px 0 40px; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 8px; font-size: .82rem; color: var(--dim);
+    border: 1px solid var(--rule); background: var(--surface); padding: 5px 12px; border-radius: 99px;
+  }
+  .pill i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent2); box-shadow: 0 0 0 3px rgba(20,184,166,.2); }
+  h1 { font-size: clamp(2.4rem, 7vw, 4rem); line-height: 1.05; letter-spacing: -.04em; margin: 22px 0 18px; }
+  h1 span { background: linear-gradient(90deg, var(--accent), var(--accent2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .lead { font-size: 1.15rem; color: var(--dim); max-width: 60ch; margin: 0 0 28px; }
+  .cta { display: flex; flex-wrap: wrap; gap: 10px; }
+  .btn {
+    display: inline-block; padding: 10px 20px; border-radius: 12px; font-weight: 600; font-size: .94rem;
+    border: 1px solid var(--rule); background: var(--surface); transition: transform .15s, border-color .15s;
+  }
+  .btn:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .btn.primary { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+
+  section { padding-top: 64px; }
+  h2 { font-size: .8rem; text-transform: uppercase; letter-spacing: .12em; color: var(--dim); margin: 0 0 20px; font-weight: 600; }
+
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .stat { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
+  .stat b { display: block; font-size: 2rem; letter-spacing: -.03em; }
+  .stat span { color: var(--dim); font-size: .88rem; }
+
+  .tags { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tags span, .tags a { border: 1px solid var(--rule); background: var(--surface); padding: 5px 13px; border-radius: 99px; font-size: .88rem; }
+  .tags a { transition: border-color .15s; }
+  .tags a:hover { border-color: var(--accent); }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; }
+  .card {
+    display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--rule);
+    border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); transition: transform .2s, border-color .2s;
+  }
+  .card:hover { transform: translateY(-4px); border-color: var(--accent); }
+  .card .ico {
+    width: 52px; height: 52px; border-radius: 13px; margin-bottom: 18px; display: grid; place-items: center;
+    background: var(--glow); color: var(--accent); font-weight: 700; font-size: 1.2rem; overflow: hidden;
+  }
+  .card .ico img { width: 100%; height: 100%; object-fit: cover; }
+  .card h3 { margin: 0 0 6px; font-size: 1.1rem; letter-spacing: -.01em; }
+  .card p { margin: 0 0 18px; color: var(--dim); font-size: .94rem; flex: 1; }
+  .card .go { font-size: .88rem; font-weight: 600; color: var(--accent); }
+  .card:hover .go { text-decoration: underline; }
+
+  .timeline { border-left: 2px solid var(--rule); margin-left: 6px; }
+  .job { position: relative; padding: 0 0 30px 26px; }
+  .job::before {
+    content: ""; position: absolute; left: -7px; top: 7px; width: 12px; height: 12px; border-radius: 50%;
+    background: var(--bg); border: 2px solid var(--accent);
+  }
+  .job:first-child::before { background: var(--accent); }
+  .job h3 { margin: 0; font-size: 1.05rem; letter-spacing: -.01em; }
+  .job .meta { color: var(--dim); font-size: .88rem; margin-bottom: 8px; }
+  .job ul { margin: 0; padding-left: 18px; color: var(--dim); }
+  .job li { margin: 3px 0; }
+
+  footer { margin-top: 72px; padding-top: 28px; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; color: var(--dim); font-size: .9rem; }
+  footer a:hover { color: var(--fg); }
+  footer .row { display: flex; gap: 18px; }
+
+  @media (max-width: 600px) {
+    .stats { grid-template-columns: 1fr; }
+    nav .links { gap: 14px; }
+    .hero { padding-top: 40px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto; } }
 </style>
 </head>
 <body>
 <main>
-  <p class="prompt">whoami</p>
-  <h1>Rheno Budiasa</h1>
-  <p class="dim">DevOps Engineering Manager · Singapore · 13 years shipping software</p>
+  <nav>
+    <a class="logo" href="#top">rheno.</a>
+    <div class="links"><a href="#work">Work</a><a href="#experience">Experience</a><a href="#contact">Contact</a></div>
+  </nav>
 
-  <p class="prompt">cat about.txt</p>
-  <p>I joined Kiteworks as its first DevOps engineer and built the function from one person to a team supporting all of engineering, QA and security. Before that I led engineering at a fintech and built Android apps at Samsung R&amp;D.</p>
+  <header class="hero" id="top">
+    <span class="pill"><i></i>Based in Singapore</span>
+    <h1>Hi, I'm Rheno.<br><span>I build engineering platforms from zero.</span></h1>
+    <p class="lead">DevOps Engineering Manager, hands-on and team lead. I joined Kiteworks as its first DevOps engineer and grew the function into a team supporting all of engineering, QA and security. Before that: VP of Engineering at a fintech, and Lead Android Engineer at Samsung R&amp;D. 13 years from mobile product to cloud infrastructure.</p>
+    <div class="cta">
+      <a class="btn primary" href="#work">See my work</a>
+      <a class="btn" href="mailto:rhenobudiasa@outlook.com">Get in touch</a>
+    </div>
+  </header>
 
-  <p class="prompt">ls ~/stack</p>
-  <p class="tags">
-    <span>AWS</span><span>EKS</span><span>Terraform</span><span>Ansible</span><span>GitLab CI</span><span>Jenkins</span><span>Docker</span><span>Prometheus</span><span>Grafana</span><span>Python</span><span>Bash</span><span>Go</span><span>C++</span>
-  </p>
+  <section>
+    <div class="stats">
+      <div class="stat"><b>13</b><span>years shipping software</span></div>
+      <div class="stat"><b>5 → 15</b><span>engineers scaled in a year</span></div>
+      <div class="stat"><b>1st</b><span>DevOps hire at Kiteworks</span></div>
+    </div>
+  </section>
 
-  <p class="prompt">history | grep job</p>
-  <div class="job">
-    <b>Manager, DevOps Engineering</b> @ Kiteworks <span class="dim">2018–now</span>
-    <ul>
-      <li>Built CI/CD from scratch across GitLab CI, Jenkins, Ansible and Terraform.</li>
-      <li>Run customer and build infrastructure on AWS: Elastic Beanstalk, EKS, RDS, EC2, Lambda.</li>
-      <li>Own observability with Prometheus, Grafana and Apache DevLake.</li>
-    </ul>
-  </div>
-  <div class="job">
-    <b>Engineering Advisor</b> @ Indonesian startups <span class="dim">2017–2018</span>
-    <ul><li>Improved development practice at usetada.com, pawoon.com and psikologimu.co.</li></ul>
-  </div>
-  <div class="job">
-    <b>VP of Engineering</b> @ UangTeman <span class="dim">2015–2017</span>
-    <ul>
-      <li>Scaled the team from 5 to 15 in a year; led the PHP → Go backend migration.</li>
-      <li>Shipped Indonesia's first micro-lending mobile app.</li>
-    </ul>
-  </div>
-  <div class="job">
-    <b>Lead Engineer</b> @ Samsung R&amp;D <span class="dim">2012–2015</span>
-    <ul><li>Lead Android engineer on ChatOn, Galaxy Gift and Samsung Salaam.</li></ul>
-  </div>
+  <section id="work">
+    <h2>Selected work</h2>
+    <div class="cards">
+      <a class="card" href="https://apps.apple.com/sg/app/finding-home-bens-journey/id6821244321">
+        <div class="ico"><img src="/findinghome/icon.png" alt=""></div>
+        <h3>Finding Home</h3>
+        <p>A cozy rescue platformer for iPhone and iPad. Help Ben bring his family home.</p>
+        <span class="go">View on App Store →</span>
+      </a>
+      <a class="card" href="https://github.com/moby/hyperkit/pull/324">
+        <div class="ico">⌘</div>
+        <h3>hyperkit-patch</h3>
+        <p>Accepted patch to the hypervisor toolkit behind Docker for Mac.</p>
+        <span class="go">View pull request →</span>
+      </a>
+      <a class="card" href="https://github.com/rheno">
+        <div class="ico">&lt;/&gt;</div>
+        <h3>github.com/rheno</h3>
+        <p>Everything else: tools, labs and experiments.</p>
+        <span class="go">Browse GitHub →</span>
+      </a>
+    </div>
+  </section>
 
-  <p class="prompt">ls -l ~/portfolio</p>
-  <ul class="portfolio">
-    <li><a href="/findinghome/">finding-home</a> <span class="dim">my cozy rescue platformer for iPhone and iPad</span></li>
-    <li><a href="https://github.com/moby/hyperkit/pull/324">hyperkit-patch</a> <span class="dim">accepted patch to the hypervisor toolkit behind Docker for Mac</span></li>
-    <li><a href="https://sg.news.yahoo.com/friend-uangteman-launches-mobile-app-reveals-expansion-plan-120606967.html">uangteman-app</a> <span class="dim">Indonesia's first micro-lending mobile app (press)</span></li>
-    <li><a href="https://www.samsung.com/africa_en/support/mobile-devices/what-is-the-chaton-application/">samsung-chaton</a> <span class="dim">Samsung's messenger app; lead Android engineer</span></li>
-    <li><a href="https://www.samsung.com/id/offer/galaxy-gift/">samsung-galaxy-gift</a> <span class="dim">offers and rewards app for Galaxy owners</span></li>
-    <li><a href="https://r1.community.samsung.com/t5/apps-services/about-salaam/td-p/36806142">samsung-salaam</a> <span class="dim">lifestyle app for Muslim users</span></li>
-    <li><a href="https://github.com/rheno">github.com/rheno</a> <span class="dim">everything else</span></li>
-  </ul>
+  <section>
+    <h2>Stack</h2>
+    <div class="tags">
+      <span>Linux</span><span>AWS</span><span>Kubernetes</span><span>EKS</span><span>Terraform</span><span>Ansible</span><span>GitLab CI</span><span>Jenkins</span><span>Docker</span><span>Prometheus</span><span>Grafana</span><span>Python</span><span>Bash</span><span>Go</span><span>C++</span>
+    </div>
+  </section>
 
-  <p class="prompt">cat achievements.txt</p>
-  <ul>
-    <li>Facebook Hacker Cup 2020 <span class="dim">qualified for the main round</span></li>
-    <li>B.Eng. Informatics, Institut Teknologi Bandung <span class="dim">2011</span></li>
-  </ul>
+  <section id="experience">
+    <h2>Experience</h2>
+    <div class="timeline">
+      <div class="job">
+        <h3>Manager, DevOps Engineering · Kiteworks</h3>
+        <div class="meta">2018 – now</div>
+        <ul>
+          <li>Joined as the first DevOps engineer; grew the function from one person to a team serving all of engineering, QA and security.</li>
+          <li>Built CI/CD from scratch across GitLab CI, Jenkins, Ansible, Terraform, VMware ESX, Hyper-V and AWS.</li>
+          <li>Enable teams with build and test tooling: pytest, SonarQube, Bandit, Selenium, Maven, Fastlane, RPM and Docker.</li>
+          <li>Run customer and build infrastructure on AWS: Elastic Beanstalk, EKS, RDS, EC2, Lambda.</li>
+          <li>Own observability with Prometheus, Grafana and Apache DevLake.</li>
+        </ul>
+      </div>
+      <div class="job">
+        <h3>Engineering Advisor · Indonesian startups</h3>
+        <div class="meta">2017 – 2018</div>
+        <ul><li>Improved development practice at usetada.com, pawoon.com and psikologimu.co.</li></ul>
+      </div>
+      <div class="job">
+        <h3>VP of Engineering · UangTeman</h3>
+        <div class="meta">2015 – 2017</div>
+        <ul>
+          <li>Scaled the team from 5 to 15 in a year; led the PHP → Go backend migration.</li>
+          <li>Built an ID-data scraping system to speed up KYC for new borrowers.</li>
+          <li>Shipped Indonesia's first micro-lending mobile app, hands-on as an Android developer.</li>
+        </ul>
+      </div>
+      <div class="job">
+        <h3>Lead Engineer · Samsung R&amp;D</h3>
+        <div class="meta">2012 – 2015</div>
+        <ul>
+          <li>Lead Android engineer on ChatOn, Galaxy Gift and Samsung Salaam.</li>
+          <li>Scrum master for the mobile and QA pod; passed Samsung's internal software certification in C++ algorithms.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
 
-  <footer>
-    <p class="prompt">contact <span class="cursor">&nbsp;</span></p>
-    <p><a href="mailto:rhenobudiasa@outlook.com">email</a> · <a href="https://github.com/rheno">github</a> · <a href="https://www.linkedin.com/in/rheno-manggala-budiasa-62101037">linkedin</a></p>
+  <section>
+    <h2>Recognition &amp; education</h2>
+    <div class="tags">
+      <a href="https://www.facebook.com/codingcompetitions/hacker-cup/2020/certificate/757287881746883">Facebook Hacker Cup 2020 · main round, rank 14,173 of 32,699 ↗</a>
+      <a href="https://www.hackerrank.com/profile/rheno">HackerRank badges · Problem Solving, C++, Java, Python, SQL, Ruby ↗</a>
+      <span>B.Eng. Informatics, Institut Teknologi Bandung · 2011</span>
+    </div>
+  </section>
+
+  <footer id="contact">
+    <span>© 2026 Rheno Budiasa</span>
+    <div class="row">
+      <a href="mailto:rhenobudiasa@outlook.com">Email</a>
+      <a href="https://github.com/rheno">GitHub</a>
+      <a href="https://www.linkedin.com/in/rheno-manggala-budiasa-62101037">LinkedIn</a>
+    </div>
   </footer>
 </main>
 </body>
