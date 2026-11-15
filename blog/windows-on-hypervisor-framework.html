@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Booting Windows 11 on a Mac with Hypervisor.framework · Rheno Budiasa</title>
+<meta name="description" content="Apple's Virtualization.framework can't run current Windows 11 builds, so I wrote a small virtual machine in Swift on Hypervisor.framework: firmware, interrupts, NVMe, USB, and three interrupt bugs.">
+<meta property="og:title" content="Booting Windows 11 on a Mac with Hypervisor.framework">
+<meta property="og:description" content="A small virtual machine in Swift: firmware, interrupts, NVMe, USB, and the three interrupt bugs between Windows Setup and a finished install.">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://rheno.github.io/blog/img/windows-setup-diskpart.png">
+<link rel="canonical" href="https://rheno.github.io/blog/windows-on-hypervisor-framework.html">
+<link rel="icon" href="/findinghome/icon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+  <nav>
+    <a class="logo" href="/">rheno.</a>
+    <div class="links"><a href="/#work">Work</a><a href="/blog/">Writing</a><a href="/#contact">Contact</a></div>
+  </nav>
+
+  <article>
+    <header class="post">
+      <h1>Booting Windows 11 on a Mac with Hypervisor.framework</h1>
+      <p class="meta">13 November 2026 · Rheno Budiasa</p>
+      <p class="lead">Apple gives you two ways to run a virtual machine on Apple silicon. The easy one couldn't start current Windows 11 builds, so I used the hard one and wrote the machine myself, in Swift. This is what that machine is made of, and the three interrupt bugs that stood between Windows Setup and a finished install.</p>
+    </header>
+
+    <h2>Why not Virtualization.framework?</h2>
+    <p>I'm building <strong>Virtualizo</strong>, a native Mac app for virtual machines and Linux containers. Linux and macOS guests run on Virtualization.framework, which hands you a complete machine: you describe the disks and the network, and Apple supplies the rest.</p>
+    <p>Windows 11 for ARM is a different story. On Virtualization.framework, current builds stopped at a black screen for me. The guest there has no performance monitoring unit (PMU), and Windows reads PMU registers during boot whether or not the CPU says it has one. You can't add a PMU to a machine you don't control.</p>
+    <p>The layer below is Hypervisor.framework. It gives you much less:</p>
+    <ul>
+      <li>a VM, and a way to map your own memory into it;</li>
+      <li>virtual CPUs that you run on threads you create;</li>
+      <li>since macOS 15, an interrupt controller (GICv3) inside the kernel.</li>
+    </ul>
+    <p>That's all. There is no firmware, no disk, no screen, no keyboard and no power button. Every one of those is your code, reacting each time the guest touches an address where a device should be.</p>
+
+    <h2>Borrow a machine instead of inventing one</h2>
+    <p>Windows needs UEFI firmware, and the open-source EDK2 project has a build for virtual ARM machines, <code>ArmVirtQemu</code>. It expects to wake up inside QEMU's <code>virt</code> machine: specific devices at specific addresses, described by a device tree it finds at the start of RAM.</p>
+    <p>So the engine pretends to be that machine. The firmware is Debian's Secure Boot build of EDK2, and it runs without knowing the difference.</p>
+    <div class="table">
+      <table>
+        <thead><tr><th>Address</th><th>What lives there</th></tr></thead>
+        <tbody>
+          <tr><td><code>0x0000_0000</code></td><td>Firmware code (flash, read-only)</td></tr>
+          <tr><td><code>0x0400_0000</code></td><td>UEFI variable store (flash)</td></tr>
+          <tr><td><code>0x0800_0000</code></td><td>Interrupt controller: distributor</td></tr>
+          <tr><td><code>0x0900_0000</code></td><td>Serial port, clock, <code>fw_cfg</code></td></tr>
+          <tr><td><code>0x0A00_0000</code></td><td>Interrupt controller: redistributors</td></tr>
+          <tr><td><code>0x0C00_0000</code></td><td>TPM 2.0</td></tr>
+          <tr><td><code>0x1000_0000</code></td><td>PCI device memory</td></tr>
+          <tr><td><code>0x3F00_0000</code></td><td>PCI configuration space</td></tr>
+          <tr><td><code>0x4000_0000</code></td><td>RAM, with the device tree at its base</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>One address had to move. QEMU puts the redistributors right after the distributor, but Hypervisor.framework reserves 32 MB for them, which doesn't fit there. The device tree tells the firmware where they went, so nothing else cares.</p>
+    <p>Starting the first CPU is then four register writes: the program counter at the firmware's first instruction, <code>x0</code> pointing at the device tree, exception level 1 with interrupts masked, and the MMU off.</p>
+
+    <h2>The loop at the centre</h2>
+    <p>Each virtual CPU is a thread that calls <code>hv_vcpu_run</code> and waits. The call returns when the guest does something the hardware can't finish on its own. Trimmed, the loop looks like this:</p>
+<pre><code>while true {
+    hv_vcpu_run(cpu.id)
+    let exit = cpu.exit.pointee
+    switch exit.reason {
+    case HV_EXIT_REASON_VTIMER_ACTIVATED:
+        hv_vcpu_set_vtimer_mask(cpu.id, false)
+    case HV_EXIT_REASON_EXCEPTION:
+        let esr = exit.exception.syndrome
+        switch (esr &gt;&gt; 26) &amp; 0x3f {            // exception class
+        case 0x24:                             // data abort: a device access
+            let size = 1 &lt;&lt; Int((esr &gt;&gt; 22) &amp; 3)
+            let reg = (esr &gt;&gt; 16) &amp; 31
+            let address = exit.exception.physical_address
+            if esr &amp; (1 &lt;&lt; 6) != 0 {
+                mmioWrite(address, cpu.reg(reg), size: size)
+            } else {
+                cpu.setReg(reg, mmioRead(address, size: size))
+            }
+            cpu.advancePC()
+        case 0x16, 0x17: psci(cpu)             // HVC, SMC: power management
+        case 0x18: readAsZero(cpu, esr)        // system register not exposed
+        case 0x01: waitForInterrupt(cpu)       // WFI: the guest is idle
+        default:   stop(cpu)
+        }
+    default: break
+    }
+}</code></pre>
+    <p>The data abort is the important case. When the guest reads or writes an address with no memory behind it, the CPU reports which register was involved, how wide the access was and whether it was a write. That is enough to emulate the access without decoding the instruction. If the CPU doesn't supply that information the engine stops the machine; so far neither the firmware nor Windows has needed more.</p>
+    <p>Power management arrives as PSCI calls. <code>CPU_ON</code> wakes the thread of another virtual CPU at the entry point the guest asked for. <code>SYSTEM_RESET</code> has the simplest implementation in the project: the engine tears the machine down and calls <code>execv</code> on itself with the same arguments. A fresh process is a fresh machine.</p>
+
+    <h2>What Windows asks for that Linux doesn't</h2>
+    <h3>ACPI, not a device tree</h3>
+    <p>The firmware reads the device tree, but Windows wants ACPI tables. The engine builds them in Swift, including the small bytecode programs (AML) that describe the PCI bus and its interrupt routing. It hands them to the firmware through <code>fw_cfg</code>, the same side channel QEMU uses, along with a script of loader commands that tells EDK2 where to place the tables and which pointers to patch.</p>
+
+    <h3>A PMU, or at least the claim of one</h3>
+    <p>This is the problem that ruled out Virtualization.framework. Windows' boot manager reads <code>PMCR_EL0</code> even when the CPU's ID register says there is no PMU, and Hypervisor.framework answers that read by injecting an undefined-instruction exception into the guest. The fix is to change what the ID register says, on every virtual CPU, before it runs:</p>
+<pre><code>var dfr0: UInt64 = 0
+hv_vcpu_get_sys_reg(vcpu, HV_SYS_REG_ID_AA64DFR0_EL1, &amp;dfr0)
+// PMUVer (bits 11:8) = 1: PMUv3
+hv_vcpu_set_sys_reg(vcpu, HV_SYS_REG_ID_AA64DFR0_EL1, dfr0 &amp; ~0xf00 | 1 &lt;&lt; 8)</code></pre>
+    <p>Three calls, once you know which three.</p>
+
+    <h3>A clock in local time, and flash that behaves like flash</h3>
+    <p>Windows keeps the hardware clock in local time, so the emulated clock adds the Mac's UTC offset.</p>
+    <p>UEFI variables live in a flash chip, and EDK2 talks to it with real flash commands: erase a sector, program a word, read the status. The variable store is mapped read-only, so writes trap to the engine. While the chip is in command mode it is unmapped entirely, so reads trap too and return status bytes instead of data. When the machine stops, the store is saved to a file.</p>
+
+    <h2>Devices Windows already has drivers for</h2>
+    <p>A fresh Windows install has no drivers for paravirtual devices like virtio. I didn't want anyone to load drivers during Setup, so every device is one Windows supports out of the box:</p>
+    <div class="table">
+      <table>
+        <thead><tr><th>Need</th><th>Emulated device</th><th>Windows driver</th></tr></thead>
+        <tbody>
+          <tr><td>Disk and installer ISO</td><td>NVMe 1.4 controllers on PCI</td><td>Inbox NVMe</td></tr>
+          <tr><td>Keyboard and pointer</td><td>USB keyboard and absolute tablet on an xHCI controller</td><td>Inbox USB HID</td></tr>
+          <tr><td>Power button</td><td>USB HID "System Power Down" control</td><td>Inbox USB HID</td></tr>
+          <tr><td>Network</td><td>USB CDC NCM adapter, connected to vmnet</td><td>Inbox UsbNcm</td></tr>
+          <tr><td>Screen</td><td>QEMU <code>ramfb</code>: a framebuffer in guest RAM</td><td>Basic display, on the firmware's framebuffer</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>The power button is its own USB device because Windows ignores the Power key on a keyboard. The screen has no GPU behind it: the firmware picks a framebuffer in guest memory and tells the engine where it is, and the engine copies those pixels to the app about 30 times a second through a memory-mapped file.</p>
+    <figure>
+      <img src="img/windows-setup-diskpart.png" alt="Windows 11 Setup's command prompt running diskpart, listing an NTFS volume and an EFI system partition" width="800" height="600">
+      <figcaption>Windows 11 Setup partitioning the emulated NVMe disk. Every pixel here was read out of guest memory.</figcaption>
+    </figure>
+
+    <h2>Three interrupt bugs</h2>
+    <p>Getting to Setup's first screen was the easy part. Getting Setup to finish copying files took three fixes, all about <em>when</em> an interrupt arrives.</p>
+
+    <h3>1. The interrupt that came too early</h3>
+    <p>The guest starts disk I/O by writing to a "doorbell" register. My first NVMe model did the whole command inside that write and raised the completion interrupt before returning. So the interrupt arrived before the guest's own store instruction had finished.</p>
+    <p>Real hardware can never be that fast, and Windows' storage stack assumes it isn't. Its interrupt handler declined the interrupt because the code it had interrupted still owned the queue. The interrupt line is level-triggered, so it fired again at once, forever.</p>
+    <p>The fix is to behave like hardware: raise the line 200 microseconds later. Lowering it stays immediate.</p>
+
+    <h3>2. Disk I/O at the wrong priority</h3>
+    <p>Windows rings that doorbell at <code>DISPATCH_LEVEL</code>, a priority where it expects to spend very little time. Doing the host's file I/O inside the doorbell exit held a virtual CPU there for as long as the read took. During large copies that was long enough for a <code>DPC_WATCHDOG_VIOLATION</code> blue screen.</p>
+    <p>Now the doorbell write returns immediately and the I/O runs on a separate queue, which is also what a real controller does.</p>
+
+    <h3>3. The CPU that never woke up</h3>
+    <p>An idle guest CPU executes <code>WFI</code>, wait for interrupt. Hypervisor.framework handles that inside the kernel and wakes the virtual CPU only for an interrupt it is able to take. Part of Windows' NVMe interrupt path waits with <code>WFI</code> while running at interrupt priority, where the timer can't reach it. With more than one virtual CPU it never woke, and the install stopped with the same watchdog blue screen.</p>
+    <p>The architecture allows <code>WFI</code> to wake for no reason. So a small thread kicks every running virtual CPU out of the guest once a millisecond:</p>
+<pre><code>Thread.detachNewThread {
+    while true {
+        usleep(1000)
+        exitVCPUs(cpus.filter { $0.on })     // hv_vcpus_exit
+    }
+}</code></pre>
+    <p>It looks crude, and it is the difference between an install that hangs and one that finishes. A related rule: when a device raises an interrupt from another thread, the engine kicks the other virtual CPUs as well, because one blocked in <code>WFI</code> doesn't notice the new interrupt by itself.</p>
+
+    <h2>Debugging a kernel you can't attach to</h2>
+    <p>When Windows hangs under your own hypervisor there is no debugger to ask. What you do have is every register and all of guest memory, so I wrote a sampler. Once a second it stops each virtual CPU and works out where it is:</p>
+    <ol>
+      <li>Read the program counter and the guest's page-table registers.</li>
+      <li>Walk the guest's page tables by hand to turn that virtual address into a pointer in host memory.</li>
+      <li>Step backwards a page at a time until a page starts with <code>MZ</code>: the header of the Windows image that contains the address.</li>
+      <li>Follow the image's debug directory to the name of its symbol file.</li>
+      <li>Do the same for each return address on the stack, after stripping the pointer-authentication bits.</li>
+    </ol>
+    <p>The result reads almost like a stack trace:</p>
+<pre><code>[sample] cpu0 pc in ntkrnlmp.pdb+0x28a510, lr in ntkrnlmp.pdb+0x28981c, elr in storport.pdb+0x14998
+[sample] cpu1 pc in ntkrnlmp.pdb+0x47fe4c, lr in ntkrnlmp.pdb+0x47fe40, elr in ntkrnlmp.pdb+0x50b578</code></pre>
+    <p>One CPU inside <code>storport</code>, the storage driver, and the others idling in the kernel. Seeing <code>storport</code> there is what pointed me at the disk path.</p>
+
+    <h2>Stopping is part of the job</h2>
+    <p>One bug was not in the guest. If the engine's process exited while virtual CPUs were still running guest code, macOS itself panicked while cleaning up the VM. So the engine stops in order: every virtual CPU thread destroys its own CPU, then the VM is destroyed, and only then does the process exit.</p>
+
+    <h2>What it can't do</h2>
+    <ul>
+      <li>There is no GPU, so the screen is a plain framebuffer and its size is fixed when the machine starts.</li>
+      <li>A running Windows machine can't be suspended or snapshotted.</li>
+      <li>It has one disk and one network adapter.</li>
+    </ul>
+    <p>The engine is about 8,200 lines of Swift. More than half of that is one device I haven't described: Windows 11 Setup refuses a machine without a TPM 2.0 and Secure Boot, so the engine has a TPM written from scratch. That is the next post.</p>
+
+    <div class="note">
+      <p><strong>Virtualizo</strong> isn't released yet. It runs Linux, macOS and Windows 11 guests and Linux containers in one native Mac app. I'll post here when it is available.</p>
+    </div>
+  </article>
+
+  <footer>
+    <span>© 2026 Rheno Budiasa</span>
+    <div class="row">
+      <a href="mailto:rhenobudiasa@outlook.com">Email</a>
+      <a href="https://github.com/rheno">GitHub</a>
+      <a href="https://www.linkedin.com/in/rheno-manggala-budiasa-62101037">LinkedIn</a>
+    </div>
+  </footer>
+</main>
+</body>
+</html>
